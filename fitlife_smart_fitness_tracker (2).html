@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitLife — Smart Fitness Tracker | SDG 3</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        sdg3: {
+                            DEFAULT: '#4C9F38',
+                            dark: '#3B7E2B',
+                            light: '#EBF6E8',
+                            accent: '#63B84E'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F8FAFC;
+            color: #1E293B;
+        }
+        .nav-pill-active {
+            background-color: #4C9F38;
+            color: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(76, 159, 56, 0.25);
+        }
+        .fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Hide scrollbar for horizontal nav on mobile */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-sdg3/20 selection:text-sdg3-dark">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3 gap-3">
+                <!-- Brand Logo -->
+                <div class="flex items-center justify-between">
+                    <button onclick="navigateTo('home')" class="flex items-center gap-2.5 text-left group focus:outline-none">
+                        <div class="w-10 h-10 rounded-xl bg-sdg3 flex items-center justify-center text-white font-display font-extrabold text-xl shadow-sm group-hover:bg-sdg3-dark transition">
+                            F
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-display font-extrabold text-xl tracking-tight text-slate-900">fitlife</span>
+                                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sdg3-light text-sdg3-dark">SDG 3</span>
+                            </div>
+                            <p class="text-xs text-slate-500 hidden sm:block">Smart Fitness Tracker</p>
+                        </div>
+                    </button>
+
+                    <!-- Quick Add Button (Mobile) -->
+                    <button onclick="quickAddWorkout()" class="md:hidden inline-flex items-center gap-1.5 bg-sdg3 hover:bg-sdg3-dark text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-sm transition active:scale-95">
+                        <span>+</span> Add Workout
+                    </button>
+                </div>
+
+                <!-- 7 Navigation Sections -->
+                <nav aria-label="Primary Navigation" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+                    <button data-nav="home" onclick="navigateTo('home')" class="nav-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
+                        HOME
+                    </button>
+                    <button data-nav="dashboard" onclick="navigateTo('dashboard')" class="nav-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
+                        DASHBOARD
+                    </button>
+                    <button data-nav="log" onclick="navigateTo('log')" class="nav-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
+                        WORKOUT LOG
+                    </button>
+                    <button data-nav="plan" onclick="navigateTo('plan')" class="nav-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
+                        WEEKLY PLAN
+                    </button>
+                    <button data-nav="progress" onclick="navigateTo('progress')" class="nav-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
+                        PROGRESS
+                    </button>
+                    <button data-nav="tips" onclick="navigateTo('tips')" class="nav-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
+                        HEALTH TIPS
+                    </button>
+                    <button data-nav="sdg3" onclick="navigateTo('sdg3')" class="nav-btn whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
+                        SDG 3
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- ========================================================= -->
+        <!-- 1. HOME (Daily Overview)                                  -->
+        <!-- ========================================================= -->
+        <section id="view-home" class="view-section fade-in space-y-6">
+            <!-- Hero Greeting Card -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div class="space-y-2 max-w-2xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sdg3-light text-sdg3-dark text-xs font-bold tracking-wide">
+                        <span>🏃 MOVE BETTER</span>
+                        <span>·</span>
+                        <span id="home-current-date">Today</span>
+                    </div>
+                    <h1 class="font-display text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                        Today, take one more step.
+                    </h1>
+                    <p class="text-slate-600 text-sm sm:text-base">
+                        A quick look at your activity and weekly goal. Track your movement, build healthier habits, and make every small step count.
+                    </p>
+                </div>
+                <div class="shrink-0">
+                    <button onclick="quickAddWorkout()" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-sdg3 hover:bg-sdg3-dark text-white font-display font-bold text-base px-7 py-4 rounded-2xl shadow-md hover:shadow-lg transition transform active:scale-95">
+                        <span class="text-2xl leading-none">+</span>
+                        <span>ADD WORKOUT</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 Quick Stats Cards (Matching Slide 06) -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">SESSIONS</p>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="home-today-sessions" class="font-display text-3xl sm:text-4xl font-extrabold text-slate-900">0</span>
+                        <span class="text-xs font-semibold text-sdg3 bg-sdg3-light px-2 py-0.5 rounded-md">TODAY</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">DURATION</p>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="home-today-duration" class="font-display text-3xl sm:text-4xl font-extrabold text-slate-900">0</span>
+                        <span class="text-xs font-semibold text-slate-500">MINUTES</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">CALORIES</p>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="home-today-calories" class="font-display text-3xl sm:text-4xl font-extrabold text-slate-900">0</span>
+                        <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">KCAL · EST.</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">WEEKLY TIME</p>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="home-weekly-time" class="font-display text-3xl sm:text-4xl font-extrabold text-sdg3">0</span>
+                        <span class="text-xs font-semibold text-slate-500">MINUTES</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Goal Progress Bar Card -->
+            <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                        <h2 class="font-display text-lg font-bold text-slate-900">Weekly Activity Goal</h2>
+                        <p id="home-goal-summary" class="text-sm text-slate-600 font-medium mt-0.5">
+                            Weekly goal · 180 / 150 min · 100% complete
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="weekly-goal-input" class="text-xs font-semibold text-slate-500">Target (min):</label>
+                        <input id="weekly-goal-input" type="number" min="30" max="2000" step="10" value="150"
+                            onchange="updateWeeklyGoal(this.value)"
+                            class="w-24 px-3 py-1.5 text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sdg3">
+                    </div>
+                </div>
+
+                <div class="w-full h-4 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/60">
+                    <div id="home-goal-bar" class="h-full bg-gradient-to-r from-sdg3 to-sdg3-accent rounded-full transition-all duration-500" style="width: 100%;"></div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between text-xs text-slate-500 pt-1">
+                    <span>WHO recommends at least 150 minutes of moderate aerobic activity per week.</span>
+                    <button onclick="navigateTo('plan')" class="text-sdg3-dark font-semibold hover:underline">View Weekly Plan →</button>
+                </div>
+            </div>
+
+            <!-- Recent Workouts Snapshot & Quick Links -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-display text-lg font-bold text-slate-900">Recent Activities</h3>
+                        <button onclick="navigateTo('log')" class="text-xs font-semibold text-sdg3 hover:text-sdg3-dark">Manage All →</button>
+                    </div>
+                    <div id="home-recent-list" class="divide-y divide-slate-100"></div>
+                </div>
+
+                <div class="bg-gradient-to-br from-sdg3 to-sdg3-dark rounded-3xl p-6 text-white shadow-sm flex flex-col justify-between space-y-6">
+                    <div class="space-y-3">
+                        <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">
+                            Design Principle
+                        </span>
+                        <h3 class="font-display text-xl font-bold leading-snug">
+                            Simple input → Clear feedback → Sustainable habits
+                        </h3>
+                        <p class="text-sm text-white/90 leading-relaxed">
+                            Consistent small efforts beat occasional intense workouts. Check your weekly analytics or explore health recovery tips.
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button onclick="navigateTo('dashboard')" class="bg-white text-sdg3-dark hover:bg-slate-50 font-semibold text-xs py-3 px-3 rounded-xl transition text-center">
+                            View Analytics
+                        </button>
+                        <button onclick="navigateTo('progress')" class="bg-white/15 hover:bg-white/25 text-white font-semibold text-xs py-3 px-3 rounded-xl transition text-center">
+                            Milestones
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 2. DASHBOARD (Key Statistics & Chart)                     -->
+        <!-- ========================================================= -->
+        <section id="view-dashboard" class="view-section hidden fade-in space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-sdg3">DATA & INSIGHTS</span>
+                    <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">Key Statistics & Weekly Activity</h2>
+                    <p class="text-sm text-slate-600 mt-1">Turn records into useful feedback to understand your activity patterns over time.</p>
+                </div>
+            </div>
+
+            <!-- 4 Automatic Summaries (Matching Slide 08) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Time</span>
+                        <span class="text-lg">⏱️</span>
+                    </div>
+                    <p id="dash-total-time" class="font-display text-3xl font-extrabold text-slate-900 mt-2">0 min</p>
+                    <p class="text-xs text-slate-500 mt-1">Minutes across all saved workouts</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Workout Count</span>
+                        <span class="text-lg">📋</span>
+                    </div>
+                    <p id="dash-workout-count" class="font-display text-3xl font-extrabold text-slate-900 mt-2">0</p>
+                    <p class="text-xs text-slate-500 mt-1">Number of recorded activities</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Estimated Calories</span>
+                        <span class="text-lg">🔥</span>
+                    </div>
+                    <p id="dash-total-calories" class="font-display text-3xl font-extrabold text-amber-600 mt-2">0 kcal</p>
+                    <p class="text-xs text-slate-500 mt-1">Based on MET × weight × duration</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Favorite Activity</span>
+                        <span class="text-lg">⭐</span>
+                    </div>
+                    <p id="dash-favorite-activity" class="font-display text-2xl sm:text-3xl font-extrabold text-sdg3 mt-2 truncate">—</p>
+                    <p class="text-xs text-slate-500 mt-1">Most frequently recorded activity</p>
+                </div>
+            </div>
+
+            <!-- Weekly Activity Chart Card -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="font-display text-lg font-bold text-slate-900">WEEKLY ACTIVITY · MINUTES (Mon–Sun)</h3>
+                        <p class="text-xs text-slate-500">Active minutes logged for the current week (Monday through Sunday)</p>
+                    </div>
+                    <div class="inline-flex rounded-xl bg-slate-100 p-1 self-start">
+                        <button id="chart-type-bar" onclick="switchWeeklyChartType('bar')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-slate-900 shadow-xs transition">Bar Chart</button>
+                        <button id="chart-type-line" onclick="switchWeeklyChartType('line')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition">Line Chart</button>
+                    </div>
+                </div>
+
+                <div class="relative w-full h-72 sm:h-80">
+                    <canvas id="weeklyActivityChart"></canvas>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-start gap-3 text-xs text-slate-600">
+                    <span class="text-base">ℹ️</span>
+                    <p>
+                        <strong>Disclaimer:</strong> Calorie values are rough estimates calculated using standard Metabolic Equivalent of Task (MET) formulas (<code class="bg-slate-200/70 px-1.5 py-0.5 rounded">MET × weight (kg) × duration (hrs)</code>) for learning and demonstration purposes, not medical measurements.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 3. WORKOUT LOG (Add / Edit / Delete / Search / Filter)    -->
+        <!-- ========================================================= -->
+        <section id="view-log" class="view-section hidden fade-in space-y-6">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-sdg3">CORE FEATURE</span>
+                <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">Workout Log — Record Every Effort</h2>
+                <p class="text-sm text-slate-600 mt-1">Create, update, search, filter, and manage your workout records. All data is saved automatically in your browser.</p>
+            </div>
+
+            <!-- Add / Edit Workout Form (Matching Slide 07) -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 id="form-title" class="font-display text-lg font-bold text-slate-900">ADD A WORKOUT</h3>
+                    <button id="cancel-edit-btn" onclick="resetWorkoutForm()" class="hidden text-xs font-semibold text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg bg-slate-100">
+                        Cancel Edit
+                    </button>
+                </div>
+
+                <form id="workout-form" onsubmit="handleWorkoutSubmit(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <input type="hidden" id="workout-id" value="">
+
+                    <!-- Activity Type -->
+                    <div>
+                        <label for="workout-type" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Activity Type</label>
+                        <select id="workout-type" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sdg3 focus:bg-white">
+                            <option value="Running">Running</option>
+                            <option value="Walking">Walking</option>
+                            <option value="Strength">Strength</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Stretching">Stretching</option>
+                            <option value="Cycling">Cycling</option>
+                            <option value="Swimming">Swimming</option>
+                        </select>
+                    </div>
+
+                    <!-- Date -->
+                    <div>
+                        <label for="workout-date" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Date</label>
+                        <input type="date" id="workout-date" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sdg3 focus:bg-white">
+                    </div>
+
+                    <!-- Duration -->
+                    <div>
+                        <label for="workout-duration" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Duration (minutes)</label>
+                        <input type="number" id="workout-duration" min="1" max="600" placeholder="45" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sdg3 focus:bg-white">
+                    </div>
+
+                    <!-- Body Weight -->
+                    <div>
+                        <label for="workout-weight" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Body Weight (kg)</label>
+                        <input type="number" id="workout-weight" min="20" max="300" step="0.5" value="65" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sdg3 focus:bg-white">
+                    </div>
+
+                    <!-- Notes -->
+                    <div>
+                        <label for="workout-notes" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Notes</label>
+                        <input type="text" id="workout-notes" placeholder="Easy pace today..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sdg3 focus:bg-white">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="sm:col-span-2 lg:col-span-5 flex flex-wrap items-center justify-between gap-3 pt-2">
+                        <span id="live-calorie-preview" class="text-xs font-medium text-slate-500">
+                            Estimated burn: <strong class="text-slate-800">~478 kcal</strong>
+                        </span>
+                        <button type="submit" id="submit-workout-btn" class="w-full sm:w-auto bg-sdg3 hover:bg-sdg3-dark text-white font-display font-bold text-sm px-8 py-3 rounded-xl shadow-sm transition active:scale-95">
+                            SAVE ACTIVITY
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Search, Filter & Workout History Table -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="font-display text-lg font-bold text-slate-900">Saved Workout Records</h3>
+                        <p id="records-count-label" class="text-xs text-slate-500">Showing all activities</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <!-- Search Keyword -->
+                        <div class="relative">
+                            <input type="text" id="search-input" oninput="renderWorkoutLog()" placeholder="Search notes or activity..."
+                                class="w-full sm:w-60 pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sdg3">
+                            <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+                        </div>
+
+                        <!-- Filter by Type -->
+                        <select id="filter-type" onchange="renderWorkoutLog()" class="px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-sdg3">
+                            <option value="ALL">All Activities</option>
+                            <option value="Running">Running</option>
+                            <option value="Walking">Walking</option>
+                            <option value="Strength">Strength</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Stretching">Stretching</option>
+                            <option value="Cycling">Cycling</option>
+                            <option value="Swimming">Swimming</option>
+                        </select>
+
+                        <!-- Reset Demo Data -->
+                        <button onclick="resetToDemoData()" title="Restore sample records" class="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+                            Reset Demo Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Responsive Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                <th class="py-3 px-3">Date</th>
+                                <th class="py-3 px-3">Activity</th>
+                                <th class="py-3 px-3">Duration</th>
+                                <th class="py-3 px-3">Weight</th>
+                                <th class="py-3 px-3">Est. Calories</th>
+                                <th class="py-3 px-3">Notes</th>
+                                <th class="py-3 px-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="workout-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 4. WEEKLY PLAN (Build a Routine)                          -->
+        <!-- ========================================================= -->
+        <section id="view-plan" class="view-section hidden fade-in space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-sdg3">HABIT BUILDING</span>
+                    <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">Weekly Plan — Build a Routine</h2>
+                    <p class="text-sm text-slate-600 mt-1">FitLife encourages consistency instead of competition. Click any day to mark completed or edit your schedule.</p>
+                </div>
+                <button onclick="resetWeeklyPlan()" class="self-start sm:self-auto px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-xl shadow-2xs transition">
+                    Restore Example Plan
+                </button>
+            </div>
+
+            <!-- 7-Day Planner Grid (Matching Slide 09) -->
+            <div id="weekly-plan-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
+                <!-- Populated via JS -->
+            </div>
+
+            <!-- Edit Day Plan Modal / Inline Drawer -->
+            <div id="plan-editor-card" class="hidden bg-white rounded-3xl p-6 border-2 border-sdg3 shadow-md space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 id="plan-editor-title" class="font-display text-lg font-bold text-slate-900">Edit Monday Plan</h3>
+                    <button onclick="closePlanEditor()" class="text-xs font-semibold text-slate-500 hover:text-slate-800">Close ✕</button>
+                </div>
+                <form onsubmit="saveDayPlan(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                    <input type="hidden" id="edit-plan-index">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Activity / Focus</label>
+                        <select id="edit-plan-activity" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium">
+                            <option value="Walk">Walk</option>
+                            <option value="Run">Run</option>
+                            <option value="Strength">Strength</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Stretch">Stretch</option>
+                            <option value="Cycling">Cycling</option>
+                            <option value="Swimming">Swimming</option>
+                            <option value="Rest day">Rest day</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Duration (min, 0 for Rest)</label>
+                        <input type="number" id="edit-plan-duration" min="0" max="300" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Status</label>
+                        <select id="edit-plan-status" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium">
+                            <option value="PLANNED">PLANNED</option>
+                            <option value="COMPLETED">COMPLETED</option>
+                            <option value="RECOVERY">RECOVERY</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-sdg3 hover:bg-sdg3-dark text-white font-bold text-sm py-2.5 px-5 rounded-xl transition">
+                        Update Day
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 5. PROGRESS (Charts & Milestones)                         -->
+        <!-- ========================================================= -->
+        <section id="view-progress" class="view-section hidden fade-in space-y-6">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-sdg3">ACHIEVEMENTS & BREAKDOWN</span>
+                <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">Progress & Personal Milestones</h2>
+                <p class="text-sm text-slate-600 mt-1">Celebrate your consistency and see how your time is distributed across different activities.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Milestone Badges (Matching Slide 09) -->
+                <div class="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-5">
+                    <div>
+                        <h3 class="font-display text-lg font-bold text-slate-900">MILESTONES</h3>
+                        <p class="text-xs text-slate-500">Automatically unlocked as you log workouts and accumulate active minutes.</p>
+                    </div>
+
+                    <div id="milestones-list" class="space-y-4">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Activity Breakdown Doughnut Chart -->
+                <div class="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
+                    <div>
+                        <h3 class="font-display text-lg font-bold text-slate-900">Activity Breakdown</h3>
+                        <p class="text-xs text-slate-500">Total minutes grouped by exercise type</p>
+                    </div>
+
+                    <div class="relative w-full h-64 flex items-center justify-center">
+                        <canvas id="activityBreakdownChart"></canvas>
+                    </div>
+
+                    <div id="breakdown-legend" class="grid grid-cols-2 gap-2 pt-2 text-xs"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 6. HEALTH TIPS (Exercise, Nutrition & Recovery)           -->
+        <!-- ========================================================= -->
+        <section id="view-tips" class="view-section hidden fade-in space-y-6">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-sdg3">IMPROVE HEALTH AWARENESS</span>
+                <h2 class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">Health Tips — Exercise, Nutrition & Recovery</h2>
+                <p class="text-sm text-slate-600 mt-1">Practical, beginner-friendly guidance to support safe movement and everyday well-being.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1: Exercise Basics -->
+                <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-5">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-sdg3 flex items-center justify-center text-2xl">
+                            🏃‍♂️
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-sdg3">01 · MOVEMENT</span>
+                            <h3 class="font-display text-xl font-bold text-slate-900 mt-1">Exercise Basics</h3>
+                        </div>
+                        <ul class="space-y-3 text-sm text-slate-600">
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-sdg3 font-bold">✓</span>
+                                <span><strong>Start with 150 min/week:</strong> Break it into manageable 30-minute brisk walks or light jogs 5 days a week.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-sdg3 font-bold">✓</span>
+                                <span><strong>Mix Cardio & Strength:</strong> Combine aerobic activities (running, cycling) with 2 days of strength training.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-sdg3 font-bold">✓</span>
+                                <span><strong>Break up sitting time:</strong> Stand up and stretch for 3–5 minutes every hour of desk work or study.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 text-xs font-semibold text-slate-400">
+                        Consistency matters more than intensity.
+                    </div>
+                </div>
+
+                <!-- Card 2: Nutrition Fundamentals -->
+                <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-5">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl">
+                            🥗
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-600">02 · FUEL</span>
+                            <h3 class="font-display text-xl font-bold text-slate-900 mt-1">Nutrition Fundamentals</h3>
+                        </div>
+                        <ul class="space-y-3 text-sm text-slate-600">
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-amber-600 font-bold">✓</span>
+                                <span><strong>Stay Hydrated:</strong> Drink water before, during, and after workouts to maintain energy and focus.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-amber-600 font-bold">✓</span>
+                                <span><strong>Balanced Plates:</strong> Pair complex carbohydrates (whole grains, fruit) with lean protein for muscle repair.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-amber-600 font-bold">✓</span>
+                                <span><strong>Mindful Snacking:</strong> Choose nuts, yogurt, or fruit over sugary drinks for steady daytime energy.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 text-xs font-semibold text-slate-400">
+                        Fuel your body for sustainable daily energy.
+                    </div>
+                </div>
+
+                <!-- Card 3: Recovery & Sleep -->
+                <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-5">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center text-2xl">
+                            🧘‍♀️
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-sky-600">03 · RESTORATION</span>
+                            <h3 class="font-display text-xl font-bold text-slate-900 mt-1">Recovery & Mobility</h3>
+                        </div>
+                        <ul class="space-y-3 text-sm text-slate-600">
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-sky-600 font-bold">✓</span>
+                                <span><strong>Schedule Rest Days:</strong> Muscles grow and adapt during recovery—plan at least 1–2 rest days weekly.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-sky-600 font-bold">✓</span>
+                                <span><strong>Warm-up & Cool-down:</strong> Spend 5 minutes stretching tight muscles after exercise to reduce soreness.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-sky-600 font-bold">✓</span>
+                                <span><strong>Prioritize 7–9 Hours of Sleep:</strong> Quality sleep regulates mood, metabolism, and physical recovery.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 text-xs font-semibold text-slate-400">
+                        Rest is an active part of your fitness plan.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 7. SDG 3 (Project Impact & Roadmap)                       -->
+        <!-- ========================================================= -->
+        <section id="view-sdg3" class="view-section hidden fade-in space-y-6">
+            <!-- SDG 3 Banner -->
+            <div class="bg-sdg3 rounded-3xl p-6 sm:p-10 text-white shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div class="space-y-3 max-w-2xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">
+                        UN Sustainable Development Goal 3
+                    </div>
+                    <h2 class="font-display text-2xl sm:text-4xl font-extrabold tracking-tight">
+                        Good Health and Well-being
+                    </h2>
+                    <p class="text-white/90 text-sm sm:text-base leading-relaxed">
+                        “Ensure healthy lives and promote well-being for all at all ages.” FitLife makes healthy physical activity easier to start, understand, and maintain through simple daily self-management.
+                    </p>
+                </div>
+                <div class="bg-white text-sdg3 rounded-2xl p-5 shrink-0 text-center w-36 shadow-md">
+                    <div class="font-display font-black text-5xl leading-none">3</div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider mt-2 leading-tight text-slate-800">
+                        GOOD HEALTH & WELL-BEING
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Challenge & How FitLife Solves It -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">01 · THE CHALLENGE</span>
+                    <h3 class="font-display text-xl font-bold text-slate-900">Why Do We Need FitLife?</h3>
+                    <div class="space-y-3">
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                            <h4 class="font-bold text-sm text-slate-900">01 · Sedentary Routines</h4>
+                            <p class="text-xs text-slate-600 mt-1">Study, desk work, and screen time cause people to sit for long periods without realizing it.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                            <h4 class="font-bold text-sm text-slate-900">02 · Low Tracking Awareness</h4>
+                            <p class="text-xs text-slate-600 mt-1">Without simple personal records, it is hard to see how active we really are each week.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                            <h4 class="font-bold text-sm text-slate-900">03 · Motivation Gaps</h4>
+                            <p class="text-xs text-slate-600 mt-1">Many people start exercising enthusiastically but lose motivation when progress feels unclear.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-sdg3">02 · OUR SOLUTION & SDG 3 IMPACT</span>
+                    <h3 class="font-display text-xl font-bold text-slate-900">How FitLife Supports SDG 3</h3>
+                    <div class="space-y-3">
+                        <div class="p-4 rounded-2xl bg-sdg3-light/60 border border-sdg3/20">
+                            <h4 class="font-bold text-sm text-sdg3-dark">01 · Encourage Physical Activity</h4>
+                            <p class="text-xs text-slate-700 mt-1">Weekly goals and routine planners remind users to move regularly at their own pace.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-sdg3-light/60 border border-sdg3/20">
+                            <h4 class="font-bold text-sm text-sdg3-dark">02 · Improve Health Awareness</h4>
+                            <p class="text-xs text-slate-700 mt-1">Curated health tips introduce exercise, nutrition, and recovery fundamentals.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-sdg3-light/60 border border-sdg3/20">
+                            <h4 class="font-bold text-sm text-sdg3-dark">03 · Support Self-Management</h4>
+                            <p class="text-xs text-slate-700 mt-1">Visual dashboards and milestone badges help users observe habits and celebrate small steps.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tech Stack & Roadmap -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">03 · TECHNOLOGY STACK</span>
+                    <h3 class="font-display text-xl font-bold text-slate-900">How This Website Works</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+                            <p class="font-bold text-slate-900">HTML5 & CSS3</p>
+                            <p class="text-slate-500 mt-1">Responsive Tailwind layout & accessible forms</p>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+                            <p class="font-bold text-slate-900">JavaScript</p>
+                            <p class="text-slate-500 mt-1">MET calculations, filtering & SPA navigation</p>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+                            <p class="font-bold text-slate-900">LocalStorage</p>
+                            <p class="text-slate-500 mt-1">Instant browser persistence without a server</p>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 sm:col-span-3">
+                            <p class="font-bold text-slate-900">Chart.js Visualization</p>
+                            <p class="text-slate-500 mt-1">Interactive weekly activity bar/line charts and category breakdowns</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">04 · PROJECT STATUS & ROADMAP</span>
+                    <h3 class="font-display text-xl font-bold text-slate-900">Current Version & Future Improvements</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div class="space-y-2">
+                            <p class="font-bold text-sdg3-dark uppercase">Completed in v1.0</p>
+                            <ul class="space-y-1.5 text-slate-600">
+                                <li>✓ 7-section responsive web app</li>
+                                <li>✓ Create, edit & delete workout logs</li>
+                                <li>✓ Activity statistics & Chart.js visuals</li>
+                                <li>✓ Weekly plan & milestone badges</li>
+                                <li>✓ Local browser data storage</li>
+                            </ul>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="font-bold text-slate-700 uppercase">Future Roadmap</p>
+                            <ul class="space-y-1.5 text-slate-600">
+                                <li>01 · User accounts & authentication</li>
+                                <li>02 · Cloud database & cross-device sync</li>
+                                <li>03 · Social challenges & friend groups</li>
+                                <li>04 · Wearable device integration</li>
+                                <li>05 · Personalized AI recommendations</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200/80 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-sdg3 text-white font-display font-bold flex items-center justify-center text-xs">F</span>
+                <span class="font-semibold text-slate-700">FitLife · Smart Fitness Tracker</span>
+                <span>— Small steps. Stronger habits.</span>
+            </div>
+            <div class="text-center sm:text-right">
+                UN SDG 3: Good Health and Well-being · Educational Prototype (Data stored locally in browser)
+            </div>
+        </div>
+    </footer>
+
+    <!-- Application Logic -->
+    <script>
+        // ==========================================
+        // 1. CONSTANTS & MET VALUES
+        // ==========================================
+        const STORAGE_KEYS = {
+            WORKOUTS: 'fitlife_workouts_v1',
+            PLAN: 'fitlife_weekly_plan_v1',
+            GOAL: 'fitlife_weekly_goal_v1'
+        };
+
+        // Standard MET values for calorie estimation: MET * weight(kg) * (duration(min)/60)
+        const ACTIVITY_METS = {
+            'Running': 9.8,
+            'Walking': 3.8,
+            'Strength': 5.0,
+            'Basketball': 6.5,
+            'Stretching': 2.5,
+            'Cycling': 7.5,
+            'Swimming': 8.0
+        };
+
+        const ACTIVITY_COLORS = {
+            'Running': '#4C9F38',
+            'Walking': '#10B981',
+            'Strength': '#F59E0B',
+            'Basketball': '#EF4444',
+            'Stretching': '#8B5CF6',
+            'Cycling': '#0EA5E9',
+            'Swimming': '#06B6D4'
+        };
+
+        // Helper to get YYYY-MM-DD relative to today so charts & "Today" stats always feel alive
+        function getRelativeDateStr(daysOffset = 0) {
+            const d = new Date();
+            d.setDate(d.getDate() + daysOffset);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Get Monday of the current week
+        function getCurrentWeekDates() {
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0 (Sun) - 6 (Sat)
+            const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + diffToMonday);
+
+            const weekDates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                weekDates.push(`${year}-${month}-${day}`);
+            }
+            return weekDates;
+        }
+
+        // Sample workouts matching presentation Slide 06, 07 & 09
+        function getDefaultWorkouts() {
+            const weekDates = getCurrentWeekDates();
+            const todayStr = getRelativeDateStr(0);
+
+            return [
+                {
+                    id: 'w-1',
+                    type: 'Running',
+                    date: todayStr,
+                    duration: 45,
+                    weight: 65,
+                    notes: 'Easy pace today, felt energized!'
+                },
+                {
+                    id: 'w-2',
+                    type: 'Stretching',
+                    date: todayStr,
+                    duration: 20,
+                    weight: 65,
+                    notes: 'Post-run mobility & cool down'
+                },
+                {
+                    id: 'w-3',
+                    type: 'Walking',
+                    date: weekDates[0], // Mon
+                    duration: 30,
+                    weight: 65,
+                    notes: 'Brisk evening walk in the park'
+                },
+                {
+                    id: 'w-4',
+                    type: 'Strength',
+                    date: weekDates[1], // Tue
+                    duration: 40,
+                    weight: 65,
+                    notes: 'Full body dumbbell & core circuit'
+                },
+                {
+                    id: 'w-5',
+                    type: 'Basketball',
+                    date: weekDates[4] <= todayStr ? weekDates[4] : weekDates[2], // Fri or Wed
+                    duration: 45,
+                    weight: 65,
+                    notes: 'Pickup game with classmates'
+                }
+            ];
+        }
+
+        // Default Weekly Plan matching Slide 09
+        function getDefaultWeeklyPlan() {
+            return [
+                { day: 'MON', fullDay: 'Monday', activity: 'Walk', duration: 30, status: 'PLANNED' },
+                { day: 'TUE', fullDay: 'Tuesday', activity: 'Strength', duration: 40, status: 'PLANNED' },
+                { day: 'WED', fullDay: 'Wednesday', activity: 'Rest day', duration: 0, status: 'RECOVERY' },
+                { day: 'THU', fullDay: 'Thursday', activity: 'Run', duration: 30, status: 'PLANNED' },
+                { day: 'FRI', fullDay: 'Friday', activity: 'Basketball', duration: 45, status: 'PLANNED' },
+                { day: 'SAT', fullDay: 'Saturday', activity: 'Stretch', duration: 20, status: 'PLANNED' },
+                { day: 'SUN', fullDay: 'Sunday', activity: 'Rest day', duration: 0, status: 'RECOVERY' }
+            ];
+        }
+
+        // ==========================================
+        // 2. STATE MANAGEMENT (LocalStorage)
+        // ==========================================
+        let workouts = [];
+        let weeklyPlan = [];
+        let weeklyGoal = 150;
+        let weeklyChartInstance = null;
+        let breakdownChartInstance = null;
+        let weeklyChartType = 'bar';
+
+        function loadState() {
+            const savedWorkouts = localStorage.getItem(STORAGE_KEYS.WORKOUTS);
+            workouts = savedWorkouts ? JSON.parse(savedWorkouts) : getDefaultWorkouts();
+
+            const savedPlan = localStorage.getItem(STORAGE_KEYS.PLAN);
+            weeklyPlan = savedPlan ? JSON.parse(savedPlan) : getDefaultWeeklyPlan();
+
+            const savedGoal = localStorage.getItem(STORAGE_KEYS.GOAL);
+            weeklyGoal = savedGoal ? parseInt(savedGoal, 10) : 150;
+        }
+
+        function saveWorkouts() {
+            localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(workouts));
+        }
+
+        function savePlan() {
+            localStorage.setItem(STORAGE_KEYS.PLAN, JSON.stringify(weeklyPlan));
+        }
+
+        function calculateCalories(type, durationMin, weightKg) {
+            const met = ACTIVITY_METS[type] || 5.0;
+            return Math.round(met * Number(weightKg) * (Number(durationMin) / 60));
+        }
+
+        // ==========================================
+        // 3. NAVIGATION & UI FEEDBACK
+        // ==========================================
+        function navigateTo(viewName) {
+            // Hide all sections
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            // Show target section
+            const target = document.getElementById(`view-${viewName}`);
+            if (target) {
+                target.classList.remove('hidden');
+            }
+
+            // Update active nav pills
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.nav === viewName) {
+                    btn.classList.add('nav-pill-active');
+                    btn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+                } else {
+                    btn.classList.remove('nav-pill-active');
+                    btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+                }
+            });
+
+            // Render charts when visiting chart tabs to ensure accurate canvas sizing
+            if (viewName === 'dashboard') {
+                renderDashboard();
+            } else if (viewName === 'progress') {
+                renderProgress();
+            } else if (viewName === 'home') {
+                renderHome();
+            } else if (viewName === 'log') {
+                renderWorkoutLog();
+            } else if (viewName === 'plan') {
+                renderWeeklyPlan();
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function quickAddWorkout() {
+            navigateTo('log');
+            resetWorkoutForm();
+            setTimeout(() => {
+                document.getElementById('workout-type').focus();
+            }, 150);
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-slate-900 text-white text-xs sm:text-sm font-medium px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 fade-in';
+            toast.innerHTML = `<span class="text-sdg3-accent font-bold">✓</span><span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2600);
+        }
+
+        // ==========================================
+        // 4. HOME VIEW RENDERING
+        // ==========================================
+        function renderHome() {
+            const todayStr = getRelativeDateStr(0);
+            const weekDates = getCurrentWeekDates();
+
+            // Display formatted date
+            const now = new Date();
+            document.getElementById('home-current-date').textContent = now.toLocaleDateString('en-US', {
+                weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+            });
+
+            // Today stats
+            const todayWorkouts = workouts.filter(w => w.date === todayStr);
+            const todaySessions = todayWorkouts.length;
+            const todayDuration = todayWorkouts.reduce((sum, w) => sum + Number(w.duration), 0);
+            const todayCalories = todayWorkouts.reduce((sum, w) => sum + calculateCalories(w.type, w.duration, w.weight), 0);
+
+            // Weekly time (Mon-Sun)
+            const weeklyWorkouts = workouts.filter(w => weekDates.includes(w.date));
+            const weeklyMinutes = weeklyWorkouts.reduce((sum, w) => sum + Number(w.duration), 0);
+
+            document.getElementById('home-today-sessions').textContent = todaySessions;
+            document.getElementById('home-today-duration').textContent = todayDuration;
+            document.getElementById('home-today-calories').textContent = todayCalories;
+            document.getElementById('home-weekly-time').textContent = weeklyMinutes;
+
+            // Weekly Goal Progress
+            document.getElementById('weekly-goal-input').value = weeklyGoal;
+            const pct = weeklyGoal > 0 ? Math.min(100, Math.round((weeklyMinutes / weeklyGoal) * 100)) : 100;
+            document.getElementById('home-goal-summary').textContent =
+                `Weekly goal · ${weeklyMinutes} / ${weeklyGoal} min · ${pct}% complete`;
+            document.getElementById('home-goal-bar').style.width = `${pct}%`;
+
+            // Recent Activities List (top 4 sorted by date desc)
+            const sorted = [...workouts].sort((a, b) => b.date.localeCompare(a.date));
+            const recentList = document.getElementById('home-recent-list');
+            if (sorted.length === 0) {
+                recentList.innerHTML = `<p class="text-sm text-slate-500 py-4">No workouts recorded yet. Click "+ ADD WORKOUT" to start!</p>`;
+                return;
+            }
+
+            recentList.innerHTML = sorted.slice(0, 4).map(w => {
+                const kcal = calculateCalories(w.type, w.duration, w.weight);
+                const color = ACTIVITY_COLORS[w.type] || '#4C9F38';
+                return `
+                    <div class="py-3.5 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="w-3 h-3 rounded-full shrink-0" style="background-color: ${color};"></span>
+                            <div class="truncate">
+                                <p class="text-sm font-bold text-slate-900 truncate">${w.type} <span class="font-normal text-slate-500">· ${w.notes || 'Active session'}</span></p>
+                                <p class="text-xs text-slate-400">${w.date}</p>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-sm font-bold text-slate-800">${w.duration} min</p>
+                            <p class="text-xs text-amber-600 font-medium">${kcal} kcal</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateWeeklyGoal(newVal) {
+            const parsed = parseInt(newVal, 10);
+            if (!isNaN(parsed) && parsed >= 10) {
+                weeklyGoal = parsed;
+                localStorage.setItem(STORAGE_KEYS.GOAL, String(weeklyGoal));
+                renderHome();
+                showToast(`Weekly goal updated to ${weeklyGoal} min`);
+            }
+        }
+
+        // ==========================================
+        // 5. DASHBOARD VIEW RENDERING
+        // ==========================================
+        function renderDashboard() {
+            const totalMinutes = workouts.reduce((sum, w) => sum + Number(w.duration), 0);
+            const workoutCount = workouts.length;
+            const totalCalories = workouts.reduce((sum, w) => sum + calculateCalories(w.type, w.duration, w.weight), 0);
+
+            // Favorite activity (by frequency, tie-breaker by total duration)
+            const freqMap = {};
+            const durMap = {};
+            workouts.forEach(w => {
+                freqMap[w.type] = (freqMap[w.type] || 0) + 1;
+                durMap[w.type] = (durMap[w.type] || 0) + Number(w.duration);
+            });
+
+            let favorite = '—';
+            let maxCount = 0;
+            Object.keys(freqMap).forEach(type => {
+                if (freqMap[type] > maxCount || (freqMap[type] === maxCount && durMap[type] > (durMap[favorite] || 0))) {
+                    maxCount = freqMap[type];
+                    favorite = type;
+                }
+            });
+
+            document.getElementById('dash-total-time').textContent = `${totalMinutes} min`;
+            document.getElementById('dash-workout-count').textContent = workoutCount;
+            document.getElementById('dash-total-calories').textContent = `${totalCalories} kcal`;
+            document.getElementById('dash-favorite-activity').textContent = favorite;
+
+            // Prepare Mon-Sun minutes for current week
+            const weekDates = getCurrentWeekDates();
+            const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const dailyMinutes = weekDates.map(dateStr => {
+                return workouts
+                    .filter(w => w.date === dateStr)
+                    .reduce((sum, w) => sum + Number(w.duration), 0);
+            });
+
+            const ctx = document.getElementById('weeklyActivityChart').getContext('2d');
+            if (weeklyChartInstance) {
+                weeklyChartInstance.destroy();
+            }
+
+            weeklyChartInstance = new Chart(ctx, {
+                type: weeklyChartType,
+                data: {
+                    labels: dayLabels,
+                    datasets: [{
+                        label: 'Active Minutes',
+                        data: dailyMinutes,
+                        backgroundColor: weeklyChartType === 'bar' ? '#4C9F38' : 'rgba(76, 159, 56, 0.16)',
+                        borderColor: '#4C9F38',
+                        borderWidth: 2.5,
+                        borderRadius: weeklyChartType === 'bar' ? 10 : 0,
+                        fill: weeklyChartType === 'line',
+                        tension: 0.35,
+                        pointBackgroundColor: '#4C9F38',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => ` ${context.parsed.y} minutes`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#F1F5F9' },
+                            ticks: {
+                                color: '#64748B',
+                                callback: (val) => `${val}m`
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#475569', font: { weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function switchWeeklyChartType(type) {
+            weeklyChartType = type;
+            const barBtn = document.getElementById('chart-type-bar');
+            const lineBtn = document.getElementById('chart-type-line');
+
+            if (type === 'bar') {
+                barBtn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-slate-900 shadow-xs transition';
+                lineBtn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition';
+            } else {
+                lineBtn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-slate-900 shadow-xs transition';
+                barBtn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition';
+            }
+            renderDashboard();
+        }
+
+        // ==========================================
+        // 6. WORKOUT LOG (CRUD + SEARCH + FILTER)
+        // ==========================================
+        function updateLiveCaloriePreview() {
+            const type = document.getElementById('workout-type').value;
+            const duration = Number(document.getElementById('workout-duration').value) || 0;
+            const weight = Number(document.getElementById('workout-weight').value) || 65;
+            const est = calculateCalories(type, duration, weight);
+            document.getElementById('live-calorie-preview').innerHTML =
+                `Estimated burn: <strong class="text-slate-800">~${est} kcal</strong>`;
+        }
+
+        function handleWorkoutSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('workout-id').value;
+            const type = document.getElementById('workout-type').value;
+            const date = document.getElementById('workout-date').value;
+            const duration = parseInt(document.getElementById('workout-duration').value, 10);
+            const weight = parseFloat(document.getElementById('workout-weight').value);
+            const notes = document.getElementById('workout-notes').value.trim();
+
+            if (id) {
+                // Edit existing
+                const index = workouts.findIndex(w => w.id === id);
+                if (index !== -1) {
+                    workouts[index] = { id, type, date, duration, weight, notes };
+                    showToast('Workout record updated!');
+                }
+            } else {
+                // Create new
+                const newRecord = {
+                    id: 'w-' + Date.now(),
+                    type,
+                    date,
+                    duration,
+                    weight,
+                    notes
+                };
+                workouts.unshift(newRecord);
+                showToast('New workout saved!');
+            }
+
+            saveWorkouts();
+            resetWorkoutForm();
+            renderWorkoutLog();
+            renderHome();
+        }
+
+        function editWorkout(id) {
+            const w = workouts.find(item => item.id === id);
+            if (!w) return;
+
+            document.getElementById('workout-id').value = w.id;
+            document.getElementById('workout-type').value = w.type;
+            document.getElementById('workout-date').value = w.date;
+            document.getElementById('workout-duration').value = w.duration;
+            document.getElementById('workout-weight').value = w.weight;
+            document.getElementById('workout-notes').value = w.notes || '';
+
+            document.getElementById('form-title').textContent = 'EDIT WORKOUT RECORD';
+            document.getElementById('submit-workout-btn').textContent = 'UPDATE ACTIVITY';
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+            updateLiveCaloriePreview();
+            document.getElementById('workout-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function deleteWorkout(id) {
+            workouts = workouts.filter(w => w.id !== id);
+            saveWorkouts();
+            renderWorkoutLog();
+            renderHome();
+            showToast('Workout record deleted');
+        }
+
+        function resetWorkoutForm() {
+            document.getElementById('workout-form').reset();
+            document.getElementById('workout-id').value = '';
+            document.getElementById('workout-date').value = getRelativeDateStr(0);
+            document.getElementById('workout-duration').value = 45;
+            document.getElementById('workout-weight').value = 65;
+
+            document.getElementById('form-title').textContent = 'ADD A WORKOUT';
+            document.getElementById('submit-workout-btn').textContent = 'SAVE ACTIVITY';
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+            updateLiveCaloriePreview();
+        }
+
+        function resetToDemoData() {
+            workouts = getDefaultWorkouts();
+            saveWorkouts();
+            renderWorkoutLog();
+            renderHome();
+            showToast('Demo workout records restored');
+        }
+
+        function renderWorkoutLog() {
+            const keyword = document.getElementById('search-input').value.toLowerCase().trim();
+            const filterType = document.getElementById('filter-type').value;
+
+            const filtered = workouts
+                .filter(w => {
+                    const matchesType = filterType === 'ALL' || w.type === filterType;
+                    const matchesKeyword = !keyword ||
+                        w.type.toLowerCase().includes(keyword) ||
+                        (w.notes && w.notes.toLowerCase().includes(keyword)) ||
+                        w.date.includes(keyword);
+                    return matchesType && matchesKeyword;
+                })
+                .sort((a, b) => b.date.localeCompare(a.date));
+
+            document.getElementById('records-count-label').textContent =
+                `Showing ${filtered.length} of ${workouts.length} recorded activities`;
+
+            const tbody = document.getElementById('workout-table-body');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-slate-500 text-sm">
+                            No matching workout records found. Try adjusting your search or add a new activity above!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(w => {
+                const kcal = calculateCalories(w.type, w.duration, w.weight);
+                const badgeColor = ACTIVITY_COLORS[w.type] || '#4C9F38';
+                return `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3.5 px-3 font-medium text-slate-700 whitespace-nowrap">${w.date}</td>
+                        <td class="py-3.5 px-3 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-white" style="background-color: ${badgeColor};">
+                                ${w.type}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-3 font-semibold text-slate-800 whitespace-nowrap">${w.duration} min</td>
+                        <td class="py-3.5 px-3 text-slate-600 whitespace-nowrap">${w.weight} kg</td>
+                        <td class="py-3.5 px-3 font-semibold text-amber-600 whitespace-nowrap">~${kcal} kcal</td>
+                        <td class="py-3.5 px-3 text-slate-600 max-w-xs truncate">${w.notes || '—'}</td>
+                        <td class="py-3.5 px-3 text-right whitespace-nowrap space-x-1.5">
+                            <button onclick="editWorkout('${w.id}')" class="px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+                                Edit
+                            </button>
+                            <button onclick="deleteWorkout('${w.id}')" class="px-2.5 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // 7. WEEKLY PLANNER
+        // ==========================================
+        function renderWeeklyPlan() {
+            const grid = document.getElementById('weekly-plan-grid');
+            grid.innerHTML = weeklyPlan.map((item, idx) => {
+                const isRest = item.activity.toLowerCase().includes('rest');
+                const isCompleted = item.status === 'COMPLETED';
+
+                let cardStyle = 'bg-white border-slate-200/80';
+                let badgeStyle = 'bg-sdg3-light text-sdg3-dark';
+                if (isCompleted) {
+                    cardStyle = 'bg-sdg3-light/40 border-sdg3';
+                    badgeStyle = 'bg-sdg3 text-white';
+                } else if (isRest || item.status === 'RECOVERY') {
+                    cardStyle = 'bg-slate-50 border-slate-200';
+                    badgeStyle = 'bg-sky-100 text-sky-700';
+                }
+
+                return `
+                    <div class="rounded-3xl p-5 border ${cardStyle} shadow-2xs flex flex-col justify-between space-y-4 transition hover:shadow-sm">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-display font-extrabold text-sm tracking-wider text-slate-400">${item.day}</span>
+                                <button onclick="openPlanEditor(${idx})" class="text-xs font-semibold text-slate-400 hover:text-slate-700" title="Edit day">
+                                    ✎ Edit
+                                </button>
+                            </div>
+                            <h3 class="font-display text-lg font-bold text-slate-900">
+                                ${item.activity} ${item.duration > 0 ? `<span class="text-sm font-semibold text-slate-500">· ${item.duration} min</span>` : ''}
+                            </h3>
+                        </div>
+
+                        <div class="space-y-2 pt-2">
+                            <button onclick="togglePlanStatus(${idx})" class="w-full py-2 px-3 rounded-xl text-[11px] font-extrabold tracking-wider uppercase transition ${badgeStyle}">
+                                ${isCompleted ? '✓ COMPLETED' : item.status}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function togglePlanStatus(idx) {
+            const item = weeklyPlan[idx];
+            if (item.status === 'PLANNED') {
+                item.status = 'COMPLETED';
+            } else if (item.status === 'COMPLETED') {
+                item.status = item.activity.toLowerCase().includes('rest') ? 'RECOVERY' : 'PLANNED';
+            } else {
+                item.status = 'COMPLETED';
+            }
+            savePlan();
+            renderWeeklyPlan();
+            showToast(`${item.fullDay} updated to ${item.status}`);
+        }
+
+        function openPlanEditor(idx) {
+            const item = weeklyPlan[idx];
+            document.getElementById('edit-plan-index').value = idx;
+            document.getElementById('plan-editor-title').textContent = `Edit ${item.fullDay} Plan`;
+            document.getElementById('edit-plan-activity').value = item.activity;
+            document.getElementById('edit-plan-duration').value = item.duration;
+            document.getElementById('edit-plan-status').value = item.status;
+            document.getElementById('plan-editor-card').classList.remove('hidden');
+        }
+
+        function closePlanEditor() {
+            document.getElementById('plan-editor-card').classList.add('hidden');
+        }
+
+        function saveDayPlan(e) {
+            e.preventDefault();
+            const idx = parseInt(document.getElementById('edit-plan-index').value, 10);
+            const activity = document.getElementById('edit-plan-activity').value;
+            const duration = parseInt(document.getElementById('edit-plan-duration').value, 10) || 0;
+            const status = document.getElementById('edit-plan-status').value;
+
+            weeklyPlan[idx] = {
+                ...weeklyPlan[idx],
+                activity,
+                duration: activity === 'Rest day' ? 0 : duration,
+                status
+            };
+            savePlan();
+            closePlanEditor();
+            renderWeeklyPlan();
+            showToast(`${weeklyPlan[idx].fullDay} plan saved!`);
+        }
+
+        function resetWeeklyPlan() {
+            weeklyPlan = getDefaultWeeklyPlan();
+            savePlan();
+            renderWeeklyPlan();
+            showToast('Example weekly plan restored');
+        }
+
+        // ==========================================
+        // 8. PROGRESS & MILESTONES VIEW
+        // ==========================================
+        function renderProgress() {
+            const totalWorkouts = workouts.length;
+            const totalMinutes = workouts.reduce((sum, w) => sum + Number(w.duration), 0);
+
+            // Milestones matching Slide 09 + bonus consistency milestone
+            const milestones = [
+                {
+                    icon: '🌱',
+                    title: 'First workout',
+                    desc: 'Save your first record',
+                    unlocked: totalWorkouts >= 1,
+                    progressText: `${Math.min(totalWorkouts, 1)} / 1 workout`
+                },
+                {
+                    icon: '💪',
+                    title: 'Keep going',
+                    desc: 'Reach 5 workouts',
+                    unlocked: totalWorkouts >= 5,
+                    progressText: `${Math.min(totalWorkouts, 5)} / 5 workouts`
+                },
+                {
+                    icon: '🔥',
+                    title: '150-minute mark',
+                    desc: 'Accumulate 150 minutes',
+                    unlocked: totalMinutes >= 150,
+                    progressText: `${Math.min(totalMinutes, 150)} / 150 minutes`
+                },
+                {
+                    icon: '🏆',
+                    title: '300-minute club',
+                    desc: 'Accumulate 300 active minutes',
+                    unlocked: totalMinutes >= 300,
+                    progressText: `${Math.min(totalMinutes, 300)} / 300 minutes`
+                }
+            ];
+
+            document.getElementById('milestones-list').innerHTML = milestones.map(m => {
+                return `
+                    <div class="p-4 rounded-2xl border ${m.unlocked ? 'bg-sdg3-light/50 border-sdg3/40' : 'bg-slate-50 border-slate-200/80 opacity-75'} flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl ${m.unlocked ? 'bg-white shadow-xs' : 'bg-slate-200/70 grayscale'} flex items-center justify-center text-2xl shrink-0">
+                                ${m.icon}
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-display font-bold text-base text-slate-900">${m.title}</h4>
+                                    ${m.unlocked
+                                        ? '<span class="px-2 py-0.5 rounded-full bg-sdg3 text-white text-[10px] font-bold uppercase">Unlocked</span>'
+                                        : '<span class="px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold uppercase">Locked</span>'}
+                                </div>
+                                <p class="text-xs text-slate-600 mt-0.5">${m.desc}</p>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="text-xs font-bold ${m.unlocked ? 'text-sdg3-dark' : 'text-slate-500'}">${m.progressText}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Breakdown Doughnut Chart
+            const typeTotals = {};
+            workouts.forEach(w => {
+                typeTotals[w.type] = (typeTotals[w.type] || 0) + Number(w.duration);
+            });
+
+            const labels = Object.keys(typeTotals);
+            const dataValues = Object.values(typeTotals);
+            const colors = labels.map(l => ACTIVITY_COLORS[l] || '#4C9F38');
+
+            const ctx = document.getElementById('activityBreakdownChart').getContext('2d');
+            if (breakdownChartInstance) {
+                breakdownChartInstance.destroy();
+            }
+
+            breakdownChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.length ? labels : ['No Data'],
+                    datasets: [{
+                        data: dataValues.length ? dataValues : [1],
+                        backgroundColor: labels.length ? colors : ['#E2E8F0'],
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Custom Legend
+            const legendEl = document.getElementById('breakdown-legend');
+            if (labels.length === 0) {
+                legendEl.innerHTML = `<p class="text-slate-400 col-span-2 text-center">Log workouts to see activity breakdown.</p>`;
+            } else {
+                legendEl.innerHTML = labels.map((label, i) => `
+                    <div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-xl">
+                        <div class="flex items-center gap-2 truncate">
+                            <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${colors[i]};"></span>
+                            <span class="font-semibold text-slate-700 truncate">${label}</span>
+                        </div>
+                        <span class="font-bold text-slate-900 ml-2">${dataValues[i]}m</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // ==========================================
+        // 9. INITIALIZATION
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+
+            // Set default date in form to today
+            document.getElementById('workout-date').value = getRelativeDateStr(0);
+            document.getElementById('workout-duration').value = 45;
+
+            // Live calorie estimate listeners
+            ['workout-type', 'workout-duration', 'workout-weight'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateLiveCaloriePreview);
+            });
+            updateLiveCaloriePreview();
+
+            // Start on HOME tab
+            navigateTo('home');
+        });
+    </script>
+</body>
+</html>
